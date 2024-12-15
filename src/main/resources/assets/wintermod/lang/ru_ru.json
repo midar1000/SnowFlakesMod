@@ -1,0 +1,7 @@
+{
+  "itemGroup.wintermod": "Пример вкладки мода",
+  "block.wintermod.example_block": "Пример блока",
+  "item.wintermod.example_item": "Пример предмета",
+  "options.wintermod.menu_snowflakes": "Снежинки в меню",
+  "options.wintermod.inventory_snowflakes": "Снежинки в инвентаре"
+}

@@ -1,0 +1,7 @@
+{
+  "itemGroup.wintermod": "Example Mod Tab",
+  "block.wintermod.example_block": "Example Block",
+  "item.wintermod.example_item": "Example Item",
+  "options.wintermod.menu_snowflakes": "Menu Snowflakes",
+  "options.wintermod.inventory_snowflakes": "Inventory Snowflakes"
+}
