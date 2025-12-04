@@ -6,75 +6,80 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.Random;
 
 public class SnowDrop {
-    private static final ResourceLocation SNOW_TEXTURE = ResourceLocation.tryParse("wintermod:textures/snowflake.png");
 
-    private final Random random;
-    private double x, y; // Используем double для более точных расчётов
-    private int textureX, textureY; // Координаты текстуры снежинки
-    private int size; // Размер снежинки
-    private double speed; // Скорость падения
+    private static final ResourceLocation SNOW_TEXTURE =
+            ResourceLocation.tryParse("wintermod:textures/snowflake.png");
+
+    private final Random random = new Random();
+    public final double speedMultiplier;
+
+    private double x, y;
+    private int textureX, textureY;
+    private int size;
+    private double speed;
     private boolean dead;
 
-    private double swayAmplitude; // Амплитуда подёргивания
-    private double swayOffset;    // Смещение для синусоиды
+    private double swayAmplitude;
+    private double swayOffset;
 
-    public SnowDrop(int width, int height) {
-        this.random = new Random();
+    public SnowDrop(int width, int height, double speedMultiplier) {
 
-        // Равномерное появление по ширине экрана сверху
-        this.x = random.nextDouble() * (width - 16); // Случайная позиция по X в пределах экрана
-        this.y = -random.nextInt(height / 2) - 16; // Рандомное распределение выше экрана
+        this.speedMultiplier = speedMultiplier;
+
+        this.x = random.nextDouble() * (width - 16);
+        this.y = -random.nextInt(height / 2) - 16;
 
         this.size = 16;
 
-        int snowflakeIndex = random.nextInt(12); // Случайная текстура снежинки
+        int snowflakeIndex = random.nextInt(12);
         this.textureX = (snowflakeIndex % 4) * size;
         this.textureY = (snowflakeIndex / 4) * size;
 
-        // Уменьшение скорости падения
-        this.speed = 0.5 + random.nextDouble() * 0.8; // Скорость падения (0.5 - 1.3)
+        this.speed = (0.5 + random.nextDouble() * 0.8) * speedMultiplier;
 
-        // Лёгкое подёргивание
-        this.swayAmplitude = random.nextDouble() * 1.0 + 0.3; // Амплитуда (0.3 - 1.3 пикселя)
-        this.swayOffset = random.nextDouble() * Math.PI * 2; // Начальное смещение
+        this.swayAmplitude = random.nextDouble() * 1.0 + 0.3;
+        this.swayOffset = random.nextDouble() * Math.PI * 2;
     }
 
     public void updatePosition(int width, int height, double mouseX, double mouseY) {
+
         // Движение вниз
         this.y += speed;
 
-        // Лёгкое колебание влево и вправо
+        // Колебания
         this.x += Math.sin((this.y / 80.0) + swayOffset) * swayAmplitude;
 
-        // Убедимся, что X остаётся в пределах экрана (на случай ошибок)
-        this.x = Math.max(0, Math.min(width - size, this.x));
+        // TORUS-режим по оси X (выход → вход с другой стороны)
+        if (this.x < -size) {
+            this.x = width;
+        } else if (this.x > width) {
+            this.x = -size;
+        }
 
         // Отталкивание от мышки
         double distance = Math.sqrt(Math.pow(this.x - mouseX, 2) + Math.pow(this.y - mouseY, 2));
-        if (distance < 35) { // Радиус отталкивания пикселей
-            double pushStrength = 3.5; // Сила отталкивания
+        if (distance < 35) {
+            double pushStrength = 3.5;
             double angle = Math.atan2(this.y - mouseY, this.x - mouseX);
             this.x += Math.cos(angle) * pushStrength;
             this.y += Math.sin(angle) * pushStrength;
 
-            // Ограничение для X после отталкивания
-            this.x = Math.max(0, Math.min(width - size, this.x));
+            // Повторная проверка тороидального перехода
+            if (this.x < -size) this.x = width;
+            else if (this.x > width) this.x = -size;
         }
 
-        // Проверка выхода за нижний край экрана
+        // Умерла при падении вниз
         if (this.y > height + size) {
-            this.dead = true; // Умирает, если упала ниже экрана
+            this.dead = true;
         }
     }
 
     public void draw(GuiGraphics guiGraphics) {
-        if (dead) return;
-
-        // Рисуем снежинку
-        guiGraphics.blit(SNOW_TEXTURE, (int) this.x, (int) this.y, this.textureX, this.textureY, size, size);
+        guiGraphics.blit(SNOW_TEXTURE, (int) x, (int) y, textureX, textureY, size, size);
     }
 
     public boolean isDead() {
-        return this.dead;
+        return dead;
     }
 }
